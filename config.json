@@ -1,0 +1,5 @@
+{
+    "Token": "put your token here",
+    "Welcome": "Welcome to the server, <@%s>.",
+    "WelcomeChannel": "channel id (as string)"
+}

@@ -3,10 +3,11 @@ package main
 import (
     "fmt"
     "encoding/json"
-    "strings"
+    //"strings"
     "os"
     "os/signal"
     "syscall"
+    "regexp"
     "github.com/bwmarrin/discordgo"
 )
 
@@ -56,8 +57,10 @@ func genericReply(s *discordgo.Session, m *discordgo.MessageCreate) {
         return
     }
 
-    if strings.Contains(m.Content, ";)") {
+    winks, _ := regexp.MatchString("([()|DoO];|;[()|DoOpP])", m.Content)
+    if winks {
         s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@%s> faggot", m.Author.ID))
+        s.ChannelMessageDelete(m.ChannelID, m.ID)
         return
     }
 

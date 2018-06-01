@@ -14,9 +14,6 @@ import (
 
 type Embed struct {
     Message string
-    RulesTitle string
-    RulesText string
-    RulesText2 string
     QuestionsTitle string
     QuestionsText string
     BugsTitle string
@@ -30,13 +27,16 @@ type Config struct {
     LockedRoleID string
     Token string
     WelcomeChannel string
+    SendWelcomeDM bool
+    RequireAccept bool
     WelcomeEmbed Embed
+    RoleCommands map[string]string
 }
 
 var config = readConfig()
 
 func readConfig() Config {
-    file, _ := os.Open("config.json")
+    file, _ := os.Open("config2.json")
     conf := Config{}
     _ = json.NewDecoder(file).Decode(&conf)
     file.Close()
@@ -74,8 +74,36 @@ func main() {
 }
 
 func onJoin(s *discordgo.Session, member *discordgo.GuildMemberAdd) {
-    if !member.User.Bot {
+    if !member.User.Bot && config.RequireAccept {
         s.GuildMemberRoleAdd(config.ServerID, member.User.ID, config.LockedRoleID)
+    }
+    if !member.User.Bot && config.SendWelcomeDM {
+        dm, err := s.UserChannelCreate(member.User.ID)
+        if err != nil {
+            // todo: @mention or something
+        } else {
+            embed := &discordgo.MessageEmbed {
+                Author:      &discordgo.MessageEmbedAuthor{},
+                Color:       0xffb90f,
+                Description: config.WelcomeEmbed.Message,
+                Fields: []*discordgo.MessageEmbedField {
+                    &discordgo.MessageEmbedField {
+                        Name:   config.WelcomeEmbed.QuestionsTitle,
+                        Value:  config.WelcomeEmbed.QuestionsText,
+                        Inline: true,
+                    },
+                    &discordgo.MessageEmbedField {
+                        Name:   config.WelcomeEmbed.BugsTitle,
+                        Value:  fmt.Sprintf(config.WelcomeEmbed.BugsText, config.AdminID),
+                        Inline: true,
+                    },
+                },
+                Thumbnail: &discordgo.MessageEmbedThumbnail{
+                    URL: config.WelcomeEmbed.Image,
+                },
+            }
+            s.ChannelMessageSendEmbed(dm.ID, embed)
+        }
     }
     log.Printf("User joined: %s", userToString(member.User))
 }
@@ -87,6 +115,11 @@ func unlockUser(s *discordgo.Session, id string) {
 
 func userToString(u *discordgo.User) string {
     return fmt.Sprintf("%s#%s (ID: %s)", u.Username, u.Discriminator, u.ID)
+}
+
+func roleName(s *discordgo.State, rid string) string {
+    role, _ := s.Role(config.ServerID, rid)
+    return role.Name
 }
 
 func channelToString(c *discordgo.Channel) string {
@@ -118,6 +151,29 @@ func genericReply(s *discordgo.Session, m *discordgo.MessageCreate) {
         return
     }
 
+    if getChannel(s.State, m.ChannelID).Type == discordgo.ChannelTypeDM {
+        log.Printf("Received DM from %s with content: “%s”", userToString(m.Author), m.Content)
+        fmt.Sprintf("Received DM from %s with content: “%s”", userToString(m.Author), m.Content)
+        Member, _ := s.GuildMember(config.ServerID, m.Author.ID)
+        for comm, role := range config.RoleCommands {
+            if m.Content == comm {
+                dm, _ := s.UserChannelCreate(Member.User.ID)
+                for _, irole := range config.RoleCommands {
+                    for _, mrole := range Member.Roles {
+                        if irole == mrole {
+                            s.ChannelMessageSend(dm.ID, "Baka, du kannst nur eine der Rollen haben.")
+                            log.Printf("Denied Role %s to %s. User already has %s", roleName(s.State, irole), userToString(m.Author), roleName(s.State, irole))
+                            return
+                        }
+                    }
+                }
+                log.Printf("Giving Role %s to %s", roleName(s.State, role), userToString(m.Author))
+                s.ChannelMessageSend(dm.ID, "Haaai, Ryoukai desu~")
+                s.GuildMemberRoleAdd(config.ServerID, m.Author.ID, role)
+            }
+        }
+    }
+
     if m.Author.ID == config.AdminID {
         replyGodmode(s, m)
     } else if m.ChannelID == config.WelcomeChannel {
@@ -131,7 +187,7 @@ func genericReply(s *discordgo.Session, m *discordgo.MessageCreate) {
     // In case this doesn’t work with your font: the last character is a winking emoji.
     winks, _ := regexp.MatchString("([()|DoO];|;[()|DoOpP]|:wink:|😉)", m.Content)
     if winks {
-        s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@%s> faggot", m.Author.ID))
+        s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@%s> Oboe!", m.Author.ID))
         s.ChannelMessageDelete(m.ChannelID, m.ID)
         channel := getChannel(s.State, m.ChannelID)
         log.Printf("Deleted message by %s in %s. Content: “%s”", userToString(m.Author), channelToString(channel), m.Content)
@@ -145,6 +201,9 @@ func genericReply(s *discordgo.Session, m *discordgo.MessageCreate) {
     } else if m.Content == "o/" {
         s.ChannelMessageSend(m.ChannelID, "\\o")
         log.Printf("\\o at %s", userToString(m.Author))
+    } else if m.Content == "ayy" {
+        s.ChannelMessageSend(m.ChannelID, "lmao")
+        log.Printf("ayy lmao at %s", userToString(m.Author))
     }
 }
 
@@ -152,6 +211,7 @@ func genericReply(s *discordgo.Session, m *discordgo.MessageCreate) {
 // Admin stuff down here. This is very server-specific
 
 func replyGodmode(s *discordgo.Session, m *discordgo.MessageCreate) {
+/*
     if m.Content == "print_rules()" {
         channel := getChannel(s.State, m.ChannelID)
         log.Printf("print_rules() triggered by %s in %s.", userToString(m.Author), channelToString(channel))
@@ -202,5 +262,6 @@ func replyGodmode(s *discordgo.Session, m *discordgo.MessageCreate) {
         }
         s.ChannelMessageSendEmbed(m.ChannelID, embed)
     }
+*/
 }
 

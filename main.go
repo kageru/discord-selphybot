@@ -3,7 +3,7 @@ package main
 import (
     "fmt"
     "encoding/json"
-    //"strings"
+    "strings"
     "os"
     "os/signal"
     "syscall"
@@ -29,6 +29,8 @@ type Config struct {
     WelcomeChannel string
     SendWelcomeDM bool
     RequireAccept bool
+    ComplaintReceivedMessage string
+    ModChannel string
     WelcomeEmbed Embed
     RoleCommands map[string]string
 }
@@ -146,32 +148,52 @@ func getUser(s *discordgo.Session, uid string) *discordgo.User {
     log.Println(fmt.Sprintf("Someone deleted a message in %s: “%s”", channel.Name, messageToString(message)))
 }*/
 
+func redirectComplaint(s *discordgo.Session, m *discordgo.MessageCreate) {
+    embed := &discordgo.MessageEmbed {
+            Author:      &discordgo.MessageEmbedAuthor{},
+            Color:       0xbb0000,
+            Description: m.Content,
+    }
+    s.ChannelMessageSendEmbed(config.ModChannel, embed)
+}
+
+func receivedDM(s *discordgo.Session, m *discordgo.MessageCreate) {
+    log.Printf("Received DM from %s with content: “%s”", userToString(m.Author), m.Content)
+    fmt.Sprintf("Received DM from %s with content: “%s”", userToString(m.Author), m.Content)
+    Member, _ := s.GuildMember(config.ServerID, m.Author.ID)
+    dm, _ := s.UserChannelCreate(Member.User.ID)
+    if strings.HasPrefix(m.Content, "!complain") {
+        redirectComplaint(s, m)
+        s.ChannelMessageSend(dm.ID, config.ComplaintReceivedMessage)
+        return
+    }
+    for comm, role := range config.RoleCommands {
+        if m.Content == comm {
+            for _, irole := range config.RoleCommands {
+                for _, mrole := range Member.Roles {
+                    if irole == mrole {
+                        s.ChannelMessageSend(dm.ID, "Baka, du kannst nur eine der Rollen haben.")
+                        log.Printf("Denied Role %s to %s. User already has %s", roleName(s.State, irole), userToString(m.Author), roleName(s.State, irole))
+                        return
+                    }
+                }
+            }
+            log.Printf("Giving Role %s to %s", roleName(s.State, role), userToString(m.Author))
+            s.ChannelMessageSend(dm.ID, "Haaai, Ryoukai desu~")
+            s.GuildMemberRoleAdd(config.ServerID, m.Author.ID, role)
+        }
+    }
+
+}
+
 func genericReply(s *discordgo.Session, m *discordgo.MessageCreate) {
     if m.Author.ID == s.State.User.ID {
+        log.Printf("<Self> %s", m.Content)
         return
     }
 
     if getChannel(s.State, m.ChannelID).Type == discordgo.ChannelTypeDM {
-        log.Printf("Received DM from %s with content: “%s”", userToString(m.Author), m.Content)
-        fmt.Sprintf("Received DM from %s with content: “%s”", userToString(m.Author), m.Content)
-        Member, _ := s.GuildMember(config.ServerID, m.Author.ID)
-        for comm, role := range config.RoleCommands {
-            if m.Content == comm {
-                dm, _ := s.UserChannelCreate(Member.User.ID)
-                for _, irole := range config.RoleCommands {
-                    for _, mrole := range Member.Roles {
-                        if irole == mrole {
-                            s.ChannelMessageSend(dm.ID, "Baka, du kannst nur eine der Rollen haben.")
-                            log.Printf("Denied Role %s to %s. User already has %s", roleName(s.State, irole), userToString(m.Author), roleName(s.State, irole))
-                            return
-                        }
-                    }
-                }
-                log.Printf("Giving Role %s to %s", roleName(s.State, role), userToString(m.Author))
-                s.ChannelMessageSend(dm.ID, "Haaai, Ryoukai desu~")
-                s.GuildMemberRoleAdd(config.ServerID, m.Author.ID, role)
-            }
-        }
+        receivedDM(s, m)
     }
 
     if m.Author.ID == config.AdminID {
@@ -211,6 +233,9 @@ func genericReply(s *discordgo.Session, m *discordgo.MessageCreate) {
 // Admin stuff down here. This is very server-specific
 
 func replyGodmode(s *discordgo.Session, m *discordgo.MessageCreate) {
+    if m.Content == fmt.Sprintf("<@%s> <3", s.State.User.ID) {
+        s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@%s> <3", config.AdminID))
+    }
 /*
     if m.Content == "print_rules()" {
         channel := getChannel(s.State, m.ChannelID)

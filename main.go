@@ -75,6 +75,29 @@ func main() {
     dg.Close()
 }
 
+func getWelcomeEmbed() *discordgo.MessageEmbed {
+    return &discordgo.MessageEmbed {
+        Author:      &discordgo.MessageEmbedAuthor{},
+        Color:       0xffb90f,
+        Description: config.WelcomeEmbed.Message,
+        Fields: []*discordgo.MessageEmbedField {
+            &discordgo.MessageEmbedField {
+                Name:   config.WelcomeEmbed.QuestionsTitle,
+                Value:  config.WelcomeEmbed.QuestionsText,
+                Inline: true,
+            },
+            &discordgo.MessageEmbedField {
+                Name:   config.WelcomeEmbed.BugsTitle,
+                Value:  fmt.Sprintf(config.WelcomeEmbed.BugsText, config.AdminID),
+                Inline: true,
+            },
+        },
+        Thumbnail: &discordgo.MessageEmbedThumbnail{
+            URL: config.WelcomeEmbed.Image,
+        },
+    }
+}
+
 func onJoin(s *discordgo.Session, member *discordgo.GuildMemberAdd) {
     if !member.User.Bot && config.RequireAccept {
         s.GuildMemberRoleAdd(config.ServerID, member.User.ID, config.LockedRoleID)
@@ -84,26 +107,7 @@ func onJoin(s *discordgo.Session, member *discordgo.GuildMemberAdd) {
         if err != nil {
             // todo: @mention or something
         } else {
-            embed := &discordgo.MessageEmbed {
-                Author:      &discordgo.MessageEmbedAuthor{},
-                Color:       0xffb90f,
-                Description: config.WelcomeEmbed.Message,
-                Fields: []*discordgo.MessageEmbedField {
-                    &discordgo.MessageEmbedField {
-                        Name:   config.WelcomeEmbed.QuestionsTitle,
-                        Value:  config.WelcomeEmbed.QuestionsText,
-                        Inline: true,
-                    },
-                    &discordgo.MessageEmbedField {
-                        Name:   config.WelcomeEmbed.BugsTitle,
-                        Value:  fmt.Sprintf(config.WelcomeEmbed.BugsText, config.AdminID),
-                        Inline: true,
-                    },
-                },
-                Thumbnail: &discordgo.MessageEmbedThumbnail{
-                    URL: config.WelcomeEmbed.Image,
-                },
-            }
+            embed := getWelcomeEmbed()
             s.ChannelMessageSendEmbed(dm.ID, embed)
         }
     }
@@ -162,6 +166,10 @@ func receivedDM(s *discordgo.Session, m *discordgo.MessageCreate) {
     fmt.Sprintf("Received DM from %s with content: “%s”", userToString(m.Author), m.Content)
     Member, _ := s.GuildMember(config.ServerID, m.Author.ID)
     dm, _ := s.UserChannelCreate(Member.User.ID)
+    if m.Content == "!welcome" {
+        s.ChannelMessageSendEmbed(dm.ID, getWelcomeEmbed())
+        return
+    }
     if strings.HasPrefix(m.Content, "!complain") {
         redirectComplaint(s, m)
         s.ChannelMessageSend(dm.ID, config.ComplaintReceivedMessage)

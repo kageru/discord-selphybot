@@ -1,18 +1,24 @@
 {
-    "Token": "Your login token",
-    "AdminID": "Your user ID",
-    "ServerID": "Server ID",
-    "LockedRoleID": "Locked role ID (TODO: write readme to explain this)",
-    "WelcomeChannel": "welcome channel ID",
+    "Token": "your login token",
+    "AdminID": "your user ID",
+    "ServerID": "the server the bot will be running on",
+    "RequireAccept": false,
+    "LockedRoleID": "the role to be given to locked users (readme)",
+    "WelcomeChannel": "channel for welcome messages",
+    "SendWelcomeDM": true,
+    "ModChannel": "channel for anonymous complaints",
+    "ComplaintReceivedMessage": "Complaint received.",
+    "RoleCommands": {
+        "!u18": "role id for users under 18",
+        "!18+": "role over 18",
+        "!18":  "aliases are possible, so this could be the same role as above"
+    },
     "WelcomeEmbed": {
-        "Message": "Willkommen in Selphys Harem, verlorene Seele. Wir hoffen, du genießt deinen Aufenthalt, denn du wirst diesen Ort nie wieder verlassen.\n\nBitte lies dir die Regeln sorgfältig durch und schreibe anschließend !accept in diesen Channel, um Zugriff auf den Server zu erhalten.",
-        "RulesTitle": "__Regeln__",
-        "RulesText": "1) Sei kein Arsch. Es darf geflucht werden, solange es nicht an/gegen jemanden gerichtet ist. Nimm Rücksicht auf die Menschen um dich herum (zumindest auf diesem Server).\n\n2) Kommt es zu einem Streit mit jemandem, gehe respektvoll mit der Person/den Personen um und versuche zu verstehen, dass die Meinungen, Werte und Ansichten anderer sich von deinen unterscheiden können.\n\n3) Poste keine Daten, die zu privat sind, und frage auch nicht andere danach. Solche Daten beinhalten Adressen, Telefon- und Handynummern, etc.\n\n4) NSFW Bilder, Themen, Videos, GIFs, etc. gehört in die NSFW-Channel. Hierfür gibt es drei Kategorien. <#326403479390388224>, <#248885675246485523> und <#429226334267637760>. Lies dir die jeweiligen Channel-Beschreibungen durch, bevor du Content postest.",
-        "RulesText2": "5) Spam ist (mit Ausnahme von <#299129359904538625>) in jedem Channel untersagt.\n\n6) Bei Fragen, Wünschen und Anregungen darf sich gerne an das Personal oder direkt an mich gewendet werden.\n\n7) Keine Werbung. Dazu zählen Livestreams, egal auf welcher Plattform, und Clips, welche nicht in Bezug zu Selphys Community stehen.\n\n8) Alle Usernamen müssen leserlich und leicht zu taggen sein. Sollte dies auf (d)einen Usernamen nicht zutreffen, steht es den Maids frei, diesen zu ändern",
-        "QuestionsTitle": "__Fragen und Anregungen__",
-        "QuestionsText": "Bei Fragen wende dich einfach an die Mods. Die aktuell anwesenden Moderatoren werden rechts mit dem Rang „Maid“ oder höher angezeigt.",
+        "Message": "Welcome, new user. this message will be part of an embed",
+        "QuestionsTitle": "__Questions__",
+        "QuestionsText": "pls ask the mods. kthxbye",
         "BugsTitle": "__Bugs__",
-        "BugsText": "Mit Problemen, Fehlern und Vorschlägen zum Bot wende dich bitte an <#%s>.",
+        "BugsText": "please ask <@%s>. (this will be formatted with the AdminID above",
         "Image": "https://static-cdn.jtvnw.net/emoticons/v1/970966/3.0"
     }
 }

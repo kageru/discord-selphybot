@@ -38,7 +38,7 @@ type Config struct {
 var config = readConfig()
 
 func readConfig() Config {
-    file, _ := os.Open("config2.json")
+    file, _ := os.Open("config.json")
     conf := Config{}
     _ = json.NewDecoder(file).Decode(&conf)
     file.Close()

@@ -5,6 +5,7 @@
     "RequireAccept": false,
     "LockedRoleID": "the role to be given to locked users (readme)",
     "WelcomeChannel": "channel for welcome messages",
+    "GeneralChannel": "channel to @mention users who disabled their DMs",
     "SendWelcomeDM": true,
     "ModChannel": "channel for anonymous complaints",
     "ComplaintReceivedMessage": "Complaint received.",

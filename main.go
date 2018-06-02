@@ -27,6 +27,7 @@ type Config struct {
     LockedRoleID string
     Token string
     WelcomeChannel string
+    GeneralChannel string
     SendWelcomeDM bool
     RequireAccept bool
     ComplaintReceivedMessage string
@@ -105,10 +106,18 @@ func onJoin(s *discordgo.Session, member *discordgo.GuildMemberAdd) {
     if !member.User.Bot && config.SendWelcomeDM {
         dm, err := s.UserChannelCreate(member.User.ID)
         if err != nil {
-            // todo: @mention or something
+            log.Println(fmt.Sprintf("Error creating DM with %s", userToString(member.User), err))
         } else {
             embed := getWelcomeEmbed()
-            s.ChannelMessageSendEmbed(dm.ID, embed)
+            _, err = s.ChannelMessageSendEmbed(dm.ID, embed)
+            if err != nil {
+                log.Println(fmt.Sprintf("Error sending DM to %s", userToString(member.User), err))
+            }
+        }
+        if err != nil {
+            // if any of the preceding operations produced an error
+            log.Printf("Sending welcome @mention at %s", userToString(member.User))
+            s.ChannelMessageSend(config.GeneralChannel, fmt.Sprintf("Wilkommen <@%s>. Bitte aktiviere vorübergehend DMs für diesen Server und sende eine Nachricht mit !welcome an mich.", member.User.ID))
         }
     }
     log.Printf("User joined: %s", userToString(member.User))

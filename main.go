@@ -2,51 +2,21 @@ package main
 
 import (
     "fmt"
-    "encoding/json"
     "strings"
-    "os"
     "os/signal"
+    "os"
     "syscall"
     "regexp"
     "log"
     "github.com/bwmarrin/discordgo"
 )
 
-type Embed struct {
-    Message string
-    QuestionsTitle string
-    QuestionsText string
-    BugsTitle string
-    BugsText string
-    Image string
-}
-
-type Config struct {
-    AdminID string
-    ServerID string
-    LockedRoleID string
-    Token string
-    WelcomeChannel string
-    GeneralChannel string
-    SendWelcomeDM bool
-    RequireAccept bool
-    ComplaintReceivedMessage string
-    ModChannel string
-    WelcomeEmbed Embed
-    RoleCommands map[string]string
-}
-
 var config = readConfig()
-
-func readConfig() Config {
-    file, _ := os.Open("config.json")
-    conf := Config{}
-    _ = json.NewDecoder(file).Decode(&conf)
-    file.Close()
-    return conf
-}
+var commands []Command
+var t CommandType
 
 func main() {
+    fmt.Println(t)
     dg, err := discordgo.New("Bot " + config.Token)
     if err != nil {
         fmt.Println("error: ", err)

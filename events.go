@@ -168,13 +168,4 @@ func adminshit (s *discordgo.Session, m *discordgo.MessageCreate) {
 */
 }
 
-func redirectComplaint(s *discordgo.Session, m *discordgo.MessageCreate) {
-    embed := &discordgo.MessageEmbed {
-            Author:      &discordgo.MessageEmbedAuthor{},
-            Color:       0xbb0000,
-            Description: m.Content,
-    }
-    s.ChannelMessageSendEmbed(config.ModChannel, embed)
-}
-
 

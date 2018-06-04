@@ -34,8 +34,20 @@ func main() {
     defer f.Close()
     log.SetOutput(f)
 
+    // Moderation
+    registerCommand(Command{Trigger: "^[^`]*([()|DoO];|;[()|DoOpP]|:wink:)[^`]*$", Output: "<@%s> Oboe!", DeleteInput: true, OutputIsReply: true, Type: CommandTypeRegex})
+
+    // Misc commands
     registerCommand(Command{Trigger: "o/", Output: "\\o", Type: CommandTypeFullMatch})
     registerCommand(Command{Trigger: "\\o", Output: "o/", Type: CommandTypeFullMatch})
+    registerCommand(Command{Trigger: "<:selphyDango:441001954542616576>", Output: ":notes: Dango, Dango, Dango, Dango, Dango Daikazoku :notes:", Type: CommandTypeFullMatch})
+
+
+    registerCommand(Command{Trigger: "!welcome", OutputEmbed: getWelcomeEmbed(), Type: CommandTypeFullMatch, DMOnly: true})
+    registerCommand(Command{Trigger: "<@%s> <3", Output: "<@%s> <3", Type: CommandTypeFullMatch, AdminOnly: true, OutputIsReply: true, RequiresMention: true})
+    registerCommand(Command{Trigger: "!complain", Type: CommandTypePrefix, DMOnly: true, Function: redirectComplaint})
+
+
 
     fmt.Println("bot running. selphyWoo")
     sc := make(chan os.Signal, 1)
